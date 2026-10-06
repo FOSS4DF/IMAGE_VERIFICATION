@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" type="image/x-icon" href="https://www.peacekeeping.ch/setup/favicons/favicon-32x32.png">
+<title>Image Verification</title>
+<style>
+:root{
+  --bg:#F2F4F5; --surface:#FFFFFF; --ink:#12171A; --muted:#69747C;
+  --rule:#DDE2E5; --rule-strong:#C2CACF; --accent:#125A63; --accent-ink:#FFFFFF;
+  --warn:#9A5B00; --warn-bg:#FBF0DE; --danger:#8E2C21;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+html[data-theme="dark"]{
+  --bg:#0E1113; --surface:#171B1E; --ink:#E7EAEC; --muted:#8B959C;
+  --rule:#262B2F; --rule-strong:#394247; --accent:#4FA8A4; --accent-ink:#06181A;
+  --warn:#E0AC63; --warn-bg:#2A2015; --danger:#E0847A;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--ui);
+  font-size:15px; line-height:1.45; -webkit-text-size-adjust:100%;
+  padding-bottom:calc(84px + env(safe-area-inset-bottom));
+}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px}
+[hidden]{display:none!important}
+
+/* ---------- header ---------- */
+header{border-bottom:1px solid var(--rule);background:var(--surface)}
+.hbar{display:flex;align-items:center;gap:12px;padding:14px 0}
+.mark{width:26px;height:26px;flex:none;display:block}
+.mark svg{width:26px;height:26px;display:block;stroke:var(--ink);fill:none;stroke-width:1.5;stroke-linecap:square;stroke-linejoin:miter}
+h1{font-size:15px;font-weight:650;letter-spacing:-.01em;margin:0;flex:1;min-width:0}
+h1 small{display:block;font-weight:400;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-top:1px}
+.ctrl{display:flex;gap:8px;align-items:center}
+select,input,button{font-family:inherit;font-size:14px;color:var(--ink)}
+select.lang{appearance:none;-webkit-appearance:none;background:transparent;border:1px solid var(--rule-strong);
+  border-radius:3px;padding:6px 8px;font-size:12px;letter-spacing:.06em;font-weight:600}
+.icon-btn{background:transparent;border:1px solid var(--rule-strong);border-radius:3px;width:32px;height:31px;
+  display:grid;place-items:center;cursor:pointer;padding:0}
+.icon-btn:hover{border-color:var(--ink)}
+.icon-btn svg{width:15px;height:15px;stroke:var(--ink);fill:none;stroke-width:1.6}
+
+/* ---------- sections & fields ---------- */
+section{margin-top:22px}
+.eyebrow{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:9px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:520px){.fields{grid-template-columns:1fr}}
+.field label{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:5px}
+.field input,.field select{width:100%;background:var(--surface);border:1px solid var(--rule-strong);border-radius:3px;
+  padding:10px 11px;font-size:15px;font-family:var(--mono)}
+.field select{appearance:none;-webkit-appearance:none;font-family:var(--ui);font-size:14px;cursor:pointer}
+.field input:focus,.field select:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+
+/* ---------- add ---------- */
+.add{margin-top:0;width:100%;display:flex;align-items:center;justify-content:center;gap:9px;
+  background:var(--surface);border:1px dashed var(--rule-strong);border-radius:3px;padding:18px;
+  cursor:pointer;font-size:15px;font-weight:600;color:var(--ink)}
+.add:hover,.add.drag{border-color:var(--accent);color:var(--accent)}
+.add:disabled{opacity:.4;cursor:default;border-color:var(--rule-strong);color:var(--ink)}
+.add svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7}
+.hint{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
+
+/* ---------- list ---------- */
+.count{display:flex;align-items:baseline;justify-content:space-between;gap:10px;border-bottom:1px solid var(--rule);padding-bottom:7px;margin-bottom:2px}
+.count b{font-family:var(--mono);font-size:12px;font-weight:600}
+.linkbtn{background:none;border:none;padding:0;color:var(--muted);font-size:12px;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.linkbtn:hover{color:var(--danger)}
+.empty{border:1px solid var(--rule);border-radius:3px;background:var(--surface);padding:26px 18px;text-align:center;color:var(--muted);font-size:13px}
+.row{display:grid;grid-template-columns:22px 1fr auto;gap:12px;padding:12px 0;border-bottom:1px solid var(--rule);align-items:center}
+.idx{font-family:var(--mono);font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.fname{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fsize{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:1px}
+.rm{background:none;border:none;padding:0;color:var(--muted);font-size:11px;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.rm:hover{color:var(--danger)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:11px;margin:0}
+.kv dt{color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-size:9.5px;font-weight:600;padding-top:1.5px}
+.kv dd{margin:0;font-family:var(--mono);font-size:11px;word-break:break-all;line-height:1.4}
+.miss{color:var(--warn);background:var(--warn-bg);padding:0 4px;border-radius:2px;font-family:var(--ui);font-size:10px;letter-spacing:.04em}
+
+/* ---------- panels & buttons ---------- */
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:3px;padding:16px 18px}
+.ptitle{font-size:15px;font-weight:650;margin:0 0 4px}
+.pdesc{font-size:13px;color:var(--muted);margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;align-items:center}
+.chip{font-family:var(--mono);font-size:11px;border:1px solid var(--rule-strong);border-radius:2px;padding:2px 6px}
+.ghost{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--rule-strong);
+  border-radius:3px;padding:6px 10px;font-size:11px;letter-spacing:.05em;text-transform:uppercase;
+  font-weight:600;color:var(--muted);cursor:pointer;text-decoration:none}
+.ghost:hover{color:var(--ink);border-color:var(--ink)}
+.ghost:disabled{opacity:.3;cursor:default}
+.ghost svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.8}
+.err{border:1px solid var(--danger);color:var(--danger);border-radius:3px;padding:10px 12px;font-size:13px;margin-top:12px;background:var(--surface)}
+
+/* ---------- bar ---------- */
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--rule);
+  padding:12px 20px calc(12px + env(safe-area-inset-bottom));z-index:5}
+.prog{position:absolute;left:0;top:-1px;height:2px;width:0;background:var(--accent);transition:width .3s ease}
+.bar-in{max-width:760px;margin:0 auto;display:flex;gap:12px;align-items:center}
+.status{flex:1;font-size:11.5px;color:var(--muted);font-family:var(--mono);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.go{background:var(--accent);color:var(--accent-ink);border:none;border-radius:3px;padding:13px 22px;
+  font-size:15px;font-weight:650;cursor:pointer;letter-spacing:.01em;white-space:nowrap}
+.go:disabled{opacity:.4;cursor:default}
+.go:focus-visible,.add:focus-visible,.icon-btn:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+footer{margin:26px 0 6px;font-size:11px;color:var(--muted);text-align:center;line-height:1.6}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+.score .lbl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.score .ttl{font-size:12px;color:var(--muted);margin-top:2px;min-height:2.9em}
+.score .val{font-family:var(--mono);font-size:40px;font-weight:600;line-height:1;margin-top:10px;font-variant-numeric:tabular-nums}
+.score .track{height:2px;background:var(--rule);margin-top:12px}
+.score .fill{height:2px;width:0;transition:width .6s ease;background:var(--ink)}
+.score .verdict{font-size:13px;font-weight:600;margin-top:10px}
+.lv-ok{color:var(--accent)} .fill.lv-ok{background:var(--accent)}
+.lv-warn{color:var(--warn)} .fill.lv-warn{background:var(--warn)}
+.lv-bad{color:var(--danger)} .fill.lv-bad{background:var(--danger)}
+.pimg{width:100%;max-height:340px;object-fit:contain;display:block;background:var(--rule)}
+.ela{background:#111;padding:6px;text-align:center}
+.ela canvas{max-width:100%;height:auto;display:block;margin:0 auto}
+.ind{border-left:2px solid var(--rule-strong);padding:9px 0 9px 12px;border-bottom:1px solid var(--rule)}
+.ind.lv-ok{border-left-color:var(--accent)} .ind.lv-warn{border-left-color:var(--warn)} .ind.lv-bad{border-left-color:var(--danger)}
+.ind .n{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.ind .v{font-size:13.5px;font-weight:600;color:var(--ink);margin-top:2px}
+.ind .d{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px}
+.flag{color:var(--danger);font-family:var(--ui);font-size:11px;font-weight:600;margin-left:6px}
+.disc p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.55}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap hbar">
+    <div class="mark" aria-hidden="true"><svg viewBox="0 0 26 26"><rect x=".75" y=".75" width="24.5" height="24.5"/><circle cx="11.5" cy="11.5" r="4.75"/><path d="M15 15l5.5 5.5"/></svg></div>
+    <h1><span id="t-app">Image Verification</span><small id="t-sub">Analyse forensique · Détection IA · Bêta</small></h1>
+    <div class="ctrl">
+      <select class="lang" id="lang" aria-label="Langue">
+        <option value="fr">FR</option><option value="en">EN</option>
+        <option value="sw">SW</option><option value="ln">LN</option>
+      </select>
+      <button class="icon-btn" id="theme" type="button" aria-label="Theme">
+        <svg id="ticon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section>
+    <div class="eyebrow" id="t-intro"></div>
+    <p class="hint" style="margin-top:0" id="t-introDesc"></p>
+    <p class="hint" id="t-privacy"></p>
+  </section>
+
+  <section id="upSec">
+    <div class="eyebrow" id="t-image"></div>
+    <button class="add" id="add" type="button">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15"/><path d="M3 16l5-5 4 4 3-3 6 6"/><circle cx="16" cy="9" r="1.6"/></svg>
+      <span id="t-add"></span>
+    </button>
+    <input type="file" id="file" accept="image/*" class="sr">
+    <p class="hint" id="t-formats"></p>
+  </section>
+
+  <div id="results" hidden>
+    <section>
+      <div class="eyebrow" id="t-scores"></div>
+      <div class="fields">
+        <div class="panel score">
+          <div class="lbl" id="t-scoreManip"></div><div class="ttl" id="t-scoreManipTitle"></div>
+          <div class="val" id="scoreManipValue">--</div>
+          <div class="track"><div class="fill" id="scoreManipBar"></div></div>
+          <div class="verdict" id="scoreManipVerdict"></div>
+        </div>
+        <div class="panel score">
+          <div class="lbl" id="t-scoreAI"></div><div class="ttl" id="t-scoreAITitle"></div>
+          <div class="val" id="scoreAIValue">--</div>
+          <div class="track"><div class="fill" id="scoreAIBar"></div></div>
+          <div class="verdict" id="scoreAIVerdict"></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="fields">
+        <div>
+          <div class="eyebrow" id="t-originalImage"></div>
+          <img class="pimg" id="imagePreview" alt="">
+          <div class="fsize" id="fileMeta" style="margin-top:6px"></div>
+        </div>
+        <div>
+          <div class="eyebrow" id="t-elaResult"></div>
+          <div class="ela"><canvas id="elaCanvas"></canvas></div>
+          <p class="hint" id="t-elaHint"></p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="eyebrow" id="t-forensicIndicators"></div>
+      <div id="forensicIndicators"></div>
+    </section>
+    <section>
+      <div class="eyebrow" id="t-aiIndicators"></div>
+      <div id="aiIndicators"></div>
+    </section>
+    <section>
+      <div class="eyebrow" id="t-metadata"></div>
+      <div class="panel" id="exifBox"></div>
+    </section>
+  </div>
+
+  <section>
+    <div class="panel disc">
+      <div class="eyebrow" id="t-disclaimerTitle"></div>
+      <p id="t-disclaimerText"></p>
+    </div>
+  </section>
+
+  <footer id="t-foot"></footer>
+</main>
+
+<div class="bar">
+  <div class="prog" id="prog"></div>
+  <div class="bar-in">
+    <div class="status" id="status" aria-live="polite"></div>
+    <button class="go" id="go" type="button"></button>
+  </div>
+</div>
+
+<script>
+"use strict";
+var PREFIX="ivt";
+// ============================================================
+// TRADUCTIONS — 4 LANGUES
+// ============================================================
+const TRANSLATIONS = {
+  en: {
+    appName: "Image Verification Tool",
+    appTagline: "Forensic Analysis · AI Detection",
+    introTitle: "Verify the authenticity of an image",
+    introDesc: "Upload an image to detect possible manipulations or AI generation. The analysis combines several heuristic techniques: Error Level Analysis (ELA), noise examination, EXIF metadata reading, and detection of artifacts typical of AI models.",
+    privacyNotice: "<strong>100% private:</strong> your image never leaves your device. No network connection is used for analysis.",
+    uploadTitle: "Drag your image here",
+    uploadDesc: "or click to select a file (JPEG, PNG, WEBP)",
+    uploadBtn: "Choose a file",
+    analyzing: "Analyzing...",
+    scoreManip: "Manipulation score",
+    scoreManipTitle: "Probability of retouching / photomontage",
+    scoreAI: "AI score",
+    scoreAITitle: "Probability of AI generation",
+    originalImage: "Uploaded image",
+    elaResult: "ELA Analysis (Error Level Analysis)",
+    elaHint: "Red/yellow areas indicate different recompression — possible sign of retouching.",
+    forensicIndicators: "Forensic indicators",
+    aiIndicators: "AI generation indicators",
+    metadata: "EXIF metadata",
+    resetBtn: "Analyze another image",
+    disclaimerTitle: "Disclaimer",
+    disclaimerText: "This tool provides analytical assistance based on heuristics. No automated method replaces expert analysis. Scores should be interpreted as indications, never as absolute proof. For judicial evidence, always involve a forensic analysis expert.",
+    footer: "MP / PJM Training — DRC · Offline tool for officers · v1.0",
+    verdictAuthentic: "Likely authentic",
+    verdictDoubt: "Doubt — manual review",
+    verdictSuspect: "Strong suspicion",
+    verdictHumanCheck: "Manual review recommended",
+    verdictLikelyAI: "Likely AI-generated",
+    verdictLikelyHuman: "Likely human-made",
+    indElaName: "ELA Variance",
+    indElaSuspect: "Strong local variations — possible retouching",
+    indElaOk: "Homogeneous compression",
+    indNoiseName: "Noise pattern",
+    indNoiseSuspect: "Inconsistent noise across regions",
+    indNoiseOk: "Consistent noise",
+    indEdgeName: "Edge consistency",
+    indEdgeSuspect: "Unnatural sharp edges detected",
+    indEdgeOk: "Natural edge gradients",
+    indSmoothName: "Skin/surface smoothness",
+    indSmoothSuspect: "Excessively smooth (AI signature)",
+    indSmoothOk: "Natural texture",
+    indColorName: "Color distribution",
+    indColorSuspect: "Unnatural color clustering",
+    indColorOk: "Natural color distribution",
+    indFreqName: "Frequency artifacts",
+    indFreqSuspect: "Periodic patterns detected (GAN/diffusion)",
+    indFreqOk: "No suspicious frequency pattern",
+    indPaletteName: "Palette saturation",
+    indPaletteSuspect: "Overly vivid colors",
+    indPaletteOk: "Natural palette",
+    indCompressName: "Compression",
+    exifNone: "No EXIF metadata found",
+    exifNoneDetail: "Common on images shared via social networks (which strip EXIF). Cannot confirm origin.",
+    exifSoftwareWarn: "Editing software detected",
+    stepRead: "Reading file...",
+    stepEla: "Computing ELA...",
+    stepNoise: "Analyzing noise...",
+    stepFreq: "Frequency analysis...",
+    stepAi: "Detecting AI artifacts...",
+    stepDone: "Finalizing...",
+    errFile: "Please select a valid image file (JPEG, PNG, or WEBP).",
+    errTooBig: "Image too large (max 20 MB).",
+    levelLow: "Low",
+    levelMed: "Medium",
+    levelHigh: "High"
+  },
+  fr: {
+    appName: "Outil de vérification d'image",
+    appTagline: "Analyse forensique · Détection IA",
+    introTitle: "Vérifiez l'authenticité d'une image",
+    introDesc: "Téléversez une image pour détecter d'éventuelles manipulations ou une génération par intelligence artificielle. L'analyse combine plusieurs techniques heuristiques : analyse du niveau d'erreur (ELA), examen du bruit, lecture des métadonnées EXIF, et détection d'artefacts caractéristiques des modèles IA.",
+    privacyNotice: "<strong>100% confidentiel :</strong> votre image ne quitte jamais votre appareil. Aucune connexion réseau n'est utilisée pour l'analyse.",
+    uploadTitle: "Glissez votre image ici",
+    uploadDesc: "ou cliquez pour sélectionner un fichier (JPEG, PNG, WEBP)",
+    uploadBtn: "Choisir un fichier",
+    analyzing: "Analyse en cours...",
+    scoreManip: "Score de manipulation",
+    scoreManipTitle: "Probabilité de retouche / photomontage",
+    scoreAI: "Score IA",
+    scoreAITitle: "Probabilité de génération par IA",
+    originalImage: "Image téléversée",
+    elaResult: "Analyse ELA (Error Level Analysis)",
+    elaHint: "Les zones rouge/jaune indiquent une recompression différente — signe possible de retouche.",
+    forensicIndicators: "Indicateurs forensiques",
+    aiIndicators: "Indicateurs de génération IA",
+    metadata: "Métadonnées EXIF",
+    resetBtn: "Analyser une autre image",
+    disclaimerTitle: "Avertissement",
+    disclaimerText: "Cet outil fournit une aide à l'analyse basée sur des heuristiques. Aucune méthode automatique ne remplace l'analyse d'un expert. Les scores doivent être interprétés comme des indices, jamais comme une preuve absolue. Pour les pièces judiciaires, faites toujours intervenir un expert en analyse forensique.",
+    footer: "Formation MP / PJM — RDC · Outil offline pour officiers · v1.0",
+    verdictAuthentic: "Probablement authentique",
+    verdictDoubt: "Doute — analyse manuelle",
+    verdictSuspect: "Forte suspicion",
+    verdictHumanCheck: "Analyse manuelle recommandée",
+    verdictLikelyAI: "Probablement IA",
+    verdictLikelyHuman: "Probablement humain",
+    indElaName: "Variance ELA",
+    indElaSuspect: "Variations locales fortes — retouche possible",
+    indElaOk: "Compression homogène",
+    indNoiseName: "Motif de bruit",
+    indNoiseSuspect: "Bruit incohérent entre zones",
+    indNoiseOk: "Bruit homogène",
+    indEdgeName: "Cohérence des contours",
+    indEdgeSuspect: "Contours nets non naturels détectés",
+    indEdgeOk: "Dégradés naturels",
+    indSmoothName: "Lissage peau/surfaces",
+    indSmoothSuspect: "Excessivement lisse (signature IA)",
+    indSmoothOk: "Texture naturelle",
+    indColorName: "Distribution des couleurs",
+    indColorSuspect: "Regroupement de couleurs non naturel",
+    indColorOk: "Distribution naturelle",
+    indFreqName: "Artefacts fréquentiels",
+    indFreqSuspect: "Motifs périodiques détectés (GAN/diffusion)",
+    indFreqOk: "Pas de motif fréquentiel suspect",
+    indPaletteName: "Saturation palette",
+    indPaletteSuspect: "Couleurs trop vives",
+    indPaletteOk: "Palette naturelle",
+    indCompressName: "Compression",
+    exifNone: "Aucune métadonnée EXIF trouvée",
+    exifNoneDetail: "Fréquent sur les images partagées via réseaux sociaux (qui suppriment l'EXIF). Origine non confirmable.",
+    exifSoftwareWarn: "Logiciel de retouche détecté",
+    stepRead: "Lecture du fichier...",
+    stepEla: "Calcul de l'ELA...",
+    stepNoise: "Analyse du bruit...",
+    stepFreq: "Analyse fréquentielle...",
+    stepAi: "Détection des artefacts IA...",
+    stepDone: "Finalisation...",
+    errFile: "Veuillez sélectionner un fichier image valide (JPEG, PNG ou WEBP).",
+    errTooBig: "Image trop volumineuse (20 Mo maximum).",
+    levelLow: "Faible",
+    levelMed: "Moyen",
+    levelHigh: "Élevé"
+  },
+  sw: {
+    appName: "Chombo cha Uthibitishaji wa Picha",
+    appTagline: "Uchambuzi wa kisayansi · Ugunduzi wa AI",
+    introTitle: "Thibitisha uhalisi wa picha",
+    introDesc: "Pakia picha ili kugundua udanganyifu unaowezekana au uzalishaji wa akili bandia. Uchambuzi unachanganya mbinu kadhaa za uchunguzi: Uchambuzi wa Kiwango cha Kosa (ELA), uchunguzi wa kelele, usomaji wa metadata ya EXIF, na ugunduzi wa alama tabia za miundo ya AI.",
+    privacyNotice: "<strong>Faragha 100%:</strong> picha yako haitoki katika kifaa chako. Hakuna muunganisho wa mtandao unaotumika kwa uchambuzi.",
+    uploadTitle: "Buruta picha yako hapa",
+    uploadDesc: "au bofya kuchagua faili (JPEG, PNG, WEBP)",
+    uploadBtn: "Chagua faili",
+    analyzing: "Inachambua...",
+    scoreManip: "Alama ya udanganyifu",
+    scoreManipTitle: "Uwezekano wa kuhaririwa / photomontage",
+    scoreAI: "Alama ya AI",
+    scoreAITitle: "Uwezekano wa kuzalishwa na AI",
+    originalImage: "Picha iliyopakiwa",
+    elaResult: "Uchambuzi wa ELA",
+    elaHint: "Maeneo mekundu/manjano yanaonyesha ukandamizaji tofauti — ishara ya uwezekano wa kuhaririwa.",
+    forensicIndicators: "Viashiria vya kisayansi",
+    aiIndicators: "Viashiria vya uzalishaji wa AI",
+    metadata: "Metadata ya EXIF",
+    resetBtn: "Changanua picha nyingine",
+    disclaimerTitle: "Onyo",
+    disclaimerText: "Chombo hiki hutoa msaada wa uchambuzi kulingana na heuristiki. Hakuna njia ya kiotomatiki inayobadilisha uchambuzi wa mtaalamu. Alama zinapaswa kufasiriwa kama dalili, kamwe si uthibitisho kabisa. Kwa ushahidi wa mahakama, daima muhusishe mtaalamu wa uchambuzi wa kisayansi.",
+    footer: "Mafunzo MP / PJM — DRC · Chombo cha offline kwa maafisa · v1.0",
+    verdictAuthentic: "Yawezekana ni halisi",
+    verdictDoubt: "Shaka — uchambuzi wa mkono",
+    verdictSuspect: "Tuhuma kubwa",
+    verdictHumanCheck: "Uchambuzi wa mkono unapendekezwa",
+    verdictLikelyAI: "Yawezekana ni AI",
+    verdictLikelyHuman: "Yawezekana ni ya binadamu",
+    indElaName: "Tofauti ya ELA",
+    indElaSuspect: "Tofauti kubwa za ndani — uwezekano wa kuhaririwa",
+    indElaOk: "Ukandamizaji wa kawaida",
+    indNoiseName: "Mfumo wa kelele",
+    indNoiseSuspect: "Kelele isiyolingana kati ya maeneo",
+    indNoiseOk: "Kelele inayolingana",
+    indEdgeName: "Mshikamano wa mipaka",
+    indEdgeSuspect: "Mipaka mikali isiyo ya asili imegunduliwa",
+    indEdgeOk: "Mipaka ya asili",
+    indSmoothName: "Ulaini wa ngozi/uso",
+    indSmoothSuspect: "Laini sana (saini ya AI)",
+    indSmoothOk: "Mwonekano wa asili",
+    indColorName: "Mgawanyo wa rangi",
+    indColorSuspect: "Mkusanyiko wa rangi usio wa asili",
+    indColorOk: "Mgawanyo wa asili",
+    indFreqName: "Alama za frequency",
+    indFreqSuspect: "Mifumo ya mara kwa mara imegunduliwa (GAN/diffusion)",
+    indFreqOk: "Hakuna mfumo wa frequency wenye shaka",
+    indPaletteName: "Mwangaza wa rangi",
+    indPaletteSuspect: "Rangi nyangavu sana",
+    indPaletteOk: "Rangi za asili",
+    indCompressName: "Ukandamizaji",
+    exifNone: "Hakuna metadata ya EXIF iliyopatikana",
+    exifNoneDetail: "Kawaida kwa picha zinazoshirikiwa kupitia mitandao ya kijamii (inayoondoa EXIF). Asili haiwezi kuthibitishwa.",
+    exifSoftwareWarn: "Programu ya kuhariri imegunduliwa",
+    stepRead: "Inasoma faili...",
+    stepEla: "Inahesabu ELA...",
+    stepNoise: "Inachambua kelele...",
+    stepFreq: "Uchambuzi wa frequency...",
+    stepAi: "Ugunduzi wa alama za AI...",
+    stepDone: "Inakamilisha...",
+    errFile: "Tafadhali chagua faili halali ya picha (JPEG, PNG, au WEBP).",
+    errTooBig: "Picha kubwa sana (kiwango cha juu 20 MB).",
+    levelLow: "Chini",
+    levelMed: "Wastani",
+    levelHigh: "Juu"
+  },
+  ln: {
+    appName: "Esaleli ya Bokitisi ya Foto",
+    appTagline: "Boluki ya forensique · Boyebi ya IA",
+    introTitle: "Tala soki foto ezali ya solo",
+    introDesc: "Tinda foto mpo na koluka soki ebongisamaki to esalemaki na mayele ya masini (IA). Boluki ezali kosangisa banzela ebele : ELA (boluki ya niveau ya mbeba), boluki ya makelele, botangi ya makambo ya EXIF, mpe boyebi ya bilembo ya mibimbi ya IA.",
+    privacyNotice: "<strong>Sekele 100% :</strong> foto na yo etikaki te masini na yo. Réseau ezali kosalisa te mpo na boluki.",
+    uploadTitle: "Benda foto na yo awa",
+    uploadDesc: "to fina mpo kopona fichier (JPEG, PNG, WEBP)",
+    uploadBtn: "Pona fichier",
+    analyzing: "Boluki ezali kosalema...",
+    scoreManip: "Score ya bobongisi",
+    scoreManipTitle: "Likoki ya retouche / photomontage",
+    scoreAI: "Score ya IA",
+    scoreAITitle: "Likoki ete esalema na IA",
+    originalImage: "Foto etindami",
+    elaResult: "Boluki ya ELA",
+    elaHint: "Bisika ya motane/jaune emonisaki compression mosusu — elembo ya bobongisi.",
+    forensicIndicators: "Bilembo ya forensique",
+    aiIndicators: "Bilembo ya bosali ya IA",
+    metadata: "Makambo ya EXIF",
+    resetBtn: "Luka foto mosusu",
+    disclaimerTitle: "Likebisi",
+    disclaimerText: "Esaleli oyo ezali kopesa lisalisi ya boluki na nzela ya heuristique. Esaleli ya automatique ekoki te kobongola boluki ya moto ya mayele. Ba scores esengeli kotala lokola bilembo, ezali libela elembo ya solo te. Mpo na bilembo ya tribunal, sengisa moto ya mayele ya forensique.",
+    footer: "Formation MP / PJM — RDC · Esaleli offline mpo na ba officiers · v1.0",
+    verdictAuthentic: "Likoki ezali ya solo",
+    verdictDoubt: "Ntembe — sengeli koluka na maboko",
+    verdictSuspect: "Suspicion makasi",
+    verdictHumanCheck: "Sengeli koluka na maboko",
+    verdictLikelyAI: "Likoki ezali ya IA",
+    verdictLikelyHuman: "Likoki ezali ya moto",
+    indElaName: "Variance ELA",
+    indElaSuspect: "Bokeseni minene ya bisika — bobongisi ekoki",
+    indElaOk: "Compression ya ndenge moko",
+    indNoiseName: "Mintindo ya makelele",
+    indNoiseSuspect: "Makelele ya ndenge moko te kati ya bisika",
+    indNoiseOk: "Makelele ya ndenge moko",
+    indEdgeName: "Bokutani ya mindelo",
+    indEdgeSuspect: "Mindelo ya makasi ya bizalele te emonani",
+    indEdgeOk: "Mindelo ya bizalele",
+    indSmoothName: "Bolembu ya loposo/etando",
+    indSmoothSuspect: "Lembu mingi (elembo ya IA)",
+    indSmoothOk: "Etando ya bizalele",
+    indColorName: "Bokabwani ya balangi",
+    indColorSuspect: "Balangi esangani te na ndenge ya bizalele",
+    indColorOk: "Bokabwani ya bizalele",
+    indFreqName: "Bilembo ya fréquence",
+    indFreqSuspect: "Mintindo ya mbala na mbala emonani (GAN/diffusion)",
+    indFreqOk: "Mintindo ya fréquence ya mabe te",
+    indPaletteName: "Saturation ya palette",
+    indPaletteSuspect: "Balangi makasi mingi",
+    indPaletteOk: "Palette ya bizalele",
+    indCompressName: "Compression",
+    exifNone: "Makambo ya EXIF emonani te",
+    exifNoneDetail: "Mbala mingi epai foto epesameli na ba réseaux sociaux (oyo ezo longola EXIF). Bobimi ekoki kondimama te.",
+    exifSoftwareWarn: "Programme ya retouche emonani",
+    stepRead: "Botangi fichier...",
+    stepEla: "Bosalemi ya ELA...",
+    stepNoise: "Boluki ya makelele...",
+    stepFreq: "Boluki ya fréquence...",
+    stepAi: "Boluki ya bilembo ya IA...",
+    stepDone: "Bosukisi...",
+    errFile: "Pona fichier ya foto ya solo (JPEG, PNG, to WEBP).",
+    errTooBig: "Foto monene mingi (20 Mo se).",
+    levelLow: "Moke",
+    levelMed: "Kati kati",
+    levelHigh: "Makasi"
+  }
+};
+var EXTRA = {
+  fr:{sub:"Analyse forensique · Détection IA · Bêta",image:"Image",add:"Choisir ou déposer une image",formats:"JPEG, PNG, WEBP · 20 Mo maximum",scores:"Scores",go:"Analyser une image",again:"Analyser une autre image",ready:"Analyse terminée"},
+  en:{sub:"Forensic analysis · AI detection · Beta",image:"Image",add:"Choose or drop an image",formats:"JPEG, PNG, WEBP · 20 MB max",scores:"Scores",go:"Analyze an image",again:"Analyze another image",ready:"Analysis complete"},
+  sw:{sub:"Uchambuzi wa kisayansi · Ugunduzi wa AI · Beta",image:"Picha",add:"Chagua au dondosha picha",formats:"JPEG, PNG, WEBP · kiwango cha juu 20 MB",scores:"Alama",go:"Changanua picha",again:"Changanua picha nyingine",ready:"Uchambuzi umekamilika"},
+  ln:{sub:"Boluki ya forensique · Boyebi ya IA · Bêta",image:"Foto",add:"Pona to tika foto",formats:"JPEG, PNG, WEBP · 20 Mo se",scores:"Ba scores",go:"Luka foto",again:"Luka foto mosusu",ready:"Boluki esili"}
+};
+Object.keys(EXTRA).forEach(function(l){ Object.assign(TRANSLATIONS[l], EXTRA[l]); });
+var I18N = TRANSLATIONS;
+var LANG = "fr";
+var lastResult = null, busy = false;
+function t(key){ return (TRANSLATIONS[LANG]&&TRANSLATIONS[LANG][key])||TRANSLATIONS.fr[key]||key; }
+function plain(s){ var d=document.createElement("div"); d.innerHTML=s; return d.textContent; }
+
+function setTheme(mode){
+  document.documentElement.dataset.theme=mode;
+  document.getElementById("ticon").innerHTML = mode==="dark"
+    ? '<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/>'
+    : '<circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/>';
+  try{ localStorage.setItem(PREFIX+".theme",mode); }catch(e){}
+}
+function bootChrome(){
+  var saved={};
+  try{ saved={theme:localStorage.getItem(PREFIX+".theme"),lang:localStorage.getItem(PREFIX+".lang")}; }catch(e){}
+  var prefersDark = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches;
+  setTheme(saved.theme || (prefersDark?"dark":"light"));
+  if(saved.lang && I18N[saved.lang]) LANG=saved.lang;
+  document.getElementById("lang").value=LANG;
+  document.getElementById("theme").addEventListener("click",function(){
+    setTheme(document.documentElement.dataset.theme==="dark"?"light":"dark");
+  });
+  document.getElementById("lang").addEventListener("change",function(e){
+    LANG=e.target.value; try{localStorage.setItem(PREFIX+".lang",LANG);}catch(err){} applyLang();
+  });
+  applyLang();
+}
+
+var $=function(id){return document.getElementById(id);};
+
+function applyLang(){
+  document.documentElement.lang=LANG;
+  $("t-sub").textContent=t("sub");
+  $("t-intro").textContent=t("introTitle"); $("t-introDesc").textContent=t("introDesc");
+  $("t-privacy").textContent=plain(t("privacyNotice"));
+  ["image","add","formats","scores","scoreManip","scoreManipTitle","scoreAI","scoreAITitle","originalImage",
+   "elaResult","elaHint","forensicIndicators","aiIndicators","metadata","disclaimerTitle","disclaimerText"]
+   .forEach(function(k){ $("t-"+k).textContent=t(k); });
+  $("t-foot").textContent=t("footer");
+  document.title="Image Verification";
+  if(lastResult&&!busy){ displayResults(lastResult); status(t("ready")); }
+  renderBar();
+}
+function status(s){ $("status").textContent=s||""; }
+function renderBar(){
+  $("go").textContent=lastResult?t("again"):t("go");
+  $("go").disabled=busy;
+}
+
+// ============================================================
+// UPLOAD
+// ============================================================
+var add=$("add"), fileInput=$("file");
+add.addEventListener("click",function(){ fileInput.click(); });
+add.addEventListener("dragover",function(e){ e.preventDefault(); add.classList.add("drag"); });
+add.addEventListener("dragleave",function(){ add.classList.remove("drag"); });
+add.addEventListener("drop",function(e){ e.preventDefault(); add.classList.remove("drag"); if(e.dataTransfer.files.length>0) handleFile(e.dataTransfer.files[0]); });
+fileInput.addEventListener("change",function(e){ if(e.target.files.length>0) handleFile(e.target.files[0]); e.target.value=""; });
+$("go").addEventListener("click",function(){
+  if(lastResult){ resetAll(); }
+  fileInput.click();
+});
+function resetAll(){
+  lastResult=null; $("results").hidden=true; $("upSec").hidden=false; status(""); renderBar();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function handleFile(file){
+  if(busy) return;
+  if(!file.type.match(/^image\/(jpeg|jpg|png|webp)$/i)){ alert(t("errFile")); return; }
+  if(file.size>20*1024*1024){ alert(t("errTooBig")); return; }
+  runAnalysis(file).catch(function(e){ console.error(e); busy=false; $("prog").style.width="0"; status(""); $("upSec").hidden=false; renderBar(); alert(t("errFile")); });
+}
+
+// ============================================================
+// PIPELINE D'ANALYSE
+// ============================================================
+async function runAnalysis(file){
+  busy=true; renderBar(); $("upSec").hidden=true; $("results").hidden=true;
+  var steps=0; var setStep=function(k){ status(t(k)); steps++; $("prog").style.width=Math.min(100,steps*16)+"%"; };
+
+  setStep("stepRead");
+  var arrayBuffer=await file.arrayBuffer();
+  var dataUrl=await fileToDataURL(file);
+  var img=await loadImage(dataUrl);
+  $("imagePreview").src=dataUrl;
+  $("fileMeta").textContent=file.name+" · "+(file.size/1048576).toFixed(2)+" MB · "+img.width+"×"+img.height;
+  await sleep(50);
+
+  var canvas=document.createElement("canvas");
+  var maxDim=800, scale=Math.min(1,maxDim/Math.max(img.width,img.height));
+  canvas.width=Math.round(img.width*scale); canvas.height=Math.round(img.height*scale);
+  var ctx=canvas.getContext("2d",{willReadFrequently:true});
+  ctx.drawImage(img,0,0,canvas.width,canvas.height);
+  var imageData=ctx.getImageData(0,0,canvas.width,canvas.height);
+
+  var exif=parseEXIF(arrayBuffer,file.type);
+
+  setStep("stepEla"); await sleep(50);
+  var elaResult=await computeELA(canvas);
+  setStep("stepNoise"); await sleep(50);
+  var noiseResult=analyzeNoise(imageData);
+  var edgeResult=analyzeEdges(imageData);
+  setStep("stepFreq"); await sleep(50);
+  var colorResult=analyzeColors(imageData);
+  var paletteResult=analyzePalette(imageData);
+  setStep("stepAi"); await sleep(50);
+  var smoothResult=analyzeSmoothness(imageData);
+  var freqResult=analyzeFrequencyArtifacts(imageData);
+  setStep("stepDone"); await sleep(50);
+
+  lastResult={file:{name:file.name,size:file.size,type:file.type},exif:exif,elaResult:elaResult,noiseResult:noiseResult,
+    edgeResult:edgeResult,colorResult:colorResult,paletteResult:paletteResult,smoothResult:smoothResult,freqResult:freqResult};
+  displayResults(lastResult);
+  busy=false; $("results").hidden=false; $("prog").style.width="100%"; status(t("ready")); renderBar();
+  setTimeout(function(){ $("prog").style.width="0"; },600);
+  $("results").scrollIntoView({behavior:"smooth"});
+}
+
+function fileToDataURL(file) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.readAsDataURL(file);
+  });
+}
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ============================================================
+// ELA — Error Level Analysis
+// ============================================================
+async function computeELA(originalCanvas) {
+  const w = originalCanvas.width;
+  const h = originalCanvas.height;
+  const origCtx = originalCanvas.getContext("2d");
+  const origData = origCtx.getImageData(0, 0, w, h);
+
+  // Recompresser à qualité 75 et obtenir la version "ré-encodée"
+  const blob = await new Promise(r => originalCanvas.toBlob(r, "image/jpeg", 0.75));
+  const reEncodedUrl = URL.createObjectURL(blob);
+  const reImg = await loadImage(reEncodedUrl);
+  URL.revokeObjectURL(reEncodedUrl);
+
+  const reCanvas = document.createElement("canvas");
+  reCanvas.width = w;
+  reCanvas.height = h;
+  const reCtx = reCanvas.getContext("2d");
+  reCtx.drawImage(reImg, 0, 0, w, h);
+  const reData = reCtx.getImageData(0, 0, w, h);
+
+  // Calculer la différence et amplifier
+  const elaCanvas = document.getElementById("elaCanvas");
+  elaCanvas.width = w;
+  elaCanvas.height = h;
+  const elaCtx = elaCanvas.getContext("2d");
+  const elaData = elaCtx.createImageData(w, h);
+
+  let totalDiff = 0;
+  let maxLocal = 0;
+  const blockSize = 16;
+  const blockDiffs = [];
+  let highDiffBlocks = 0;
+
+  // Amplification ELA
+  const scale = 18;
+  for (let i = 0; i < origData.data.length; i += 4) {
+    const dr = Math.abs(origData.data[i] - reData.data[i]) * scale;
+    const dg = Math.abs(origData.data[i + 1] - reData.data[i + 1]) * scale;
+    const db = Math.abs(origData.data[i + 2] - reData.data[i + 2]) * scale;
+    const intensity = Math.min(255, (dr + dg + db) / 3);
+    // Coloration : rouge si forte, jaune si moyenne, sombre si faible
+    if (intensity > 180) {
+      elaData.data[i] = 255;
+      elaData.data[i + 1] = Math.min(255, intensity - 80);
+      elaData.data[i + 2] = 60;
+    } else if (intensity > 100) {
+      elaData.data[i] = 255;
+      elaData.data[i + 1] = 200;
+      elaData.data[i + 2] = 80;
+    } else {
+      elaData.data[i] = intensity * 0.3;
+      elaData.data[i + 1] = intensity * 0.3;
+      elaData.data[i + 2] = intensity * 0.6;
+    }
+    elaData.data[i + 3] = 255;
+    totalDiff += intensity;
+    if (intensity > maxLocal) maxLocal = intensity;
+  }
+
+  elaCtx.putImageData(elaData, 0, 0);
+
+  // Calculer la variance par blocs
+  const cols = Math.floor(w / blockSize);
+  const rows = Math.floor(h / blockSize);
+  for (let by = 0; by < rows; by++) {
+    for (let bx = 0; bx < cols; bx++) {
+      let sum = 0, count = 0;
+      for (let y = by * blockSize; y < (by + 1) * blockSize; y++) {
+        for (let x = bx * blockSize; x < (bx + 1) * blockSize; x++) {
+          const i = (y * w + x) * 4;
+          sum += Math.abs(origData.data[i] - reData.data[i]) +
+                 Math.abs(origData.data[i + 1] - reData.data[i + 1]) +
+                 Math.abs(origData.data[i + 2] - reData.data[i + 2]);
+          count++;
+        }
+      }
+      const avg = sum / (count * 3);
+      blockDiffs.push(avg);
+      if (avg > 8) highDiffBlocks++;
+    }
+  }
+
+  // Statistiques
+  const mean = blockDiffs.reduce((a, b) => a + b, 0) / blockDiffs.length;
+  const variance = blockDiffs.reduce((a, b) => a + (b - mean) ** 2, 0) / blockDiffs.length;
+  const stddev = Math.sqrt(variance);
+  const ratio = highDiffBlocks / blockDiffs.length;
+
+  // Score : plus la variance est forte, plus la proportion de blocs "suspects" est élevée => suspicion
+  let score = Math.min(100, ratio * 200 + stddev * 4);
+
+  return { score, variance, stddev, ratio, mean };
+}
+
+// ============================================================
+// ANALYSE DU BRUIT
+// ============================================================
+function analyzeNoise(imageData) {
+  const { data, width, height } = imageData;
+  const blockSize = 32;
+  const cols = Math.floor(width / blockSize);
+  const rows = Math.floor(height / blockSize);
+  const blockNoises = [];
+
+  for (let by = 0; by < rows; by++) {
+    for (let bx = 0; bx < cols; bx++) {
+      let sum = 0, count = 0, sumSq = 0;
+      for (let y = by * blockSize; y < (by + 1) * blockSize - 1; y++) {
+        for (let x = bx * blockSize; x < (bx + 1) * blockSize - 1; x++) {
+          const i = (y * width + x) * 4;
+          const iNext = (y * width + x + 1) * 4;
+          const iDown = ((y + 1) * width + x) * 4;
+          // Laplacien simple
+          const lapR = data[i] * 2 - data[iNext] - data[iDown];
+          const lapG = data[i + 1] * 2 - data[iNext + 1] - data[iDown + 1];
+          const lapB = data[i + 2] * 2 - data[iNext + 2] - data[iDown + 2];
+          const lap = (Math.abs(lapR) + Math.abs(lapG) + Math.abs(lapB)) / 3;
+          sum += lap;
+          sumSq += lap * lap;
+          count++;
+        }
+      }
+      const mean = sum / count;
+      blockNoises.push(mean);
+    }
+  }
+
+  // Calcul de la variation de bruit entre régions
+  const noiseMean = blockNoises.reduce((a, b) => a + b, 0) / blockNoises.length;
+  const noiseVar = blockNoises.reduce((a, b) => a + (b - noiseMean) ** 2, 0) / blockNoises.length;
+  const noiseStd = Math.sqrt(noiseVar);
+  // CV (coefficient de variation) — plus il est élevé, plus le bruit est incohérent
+  const cv = noiseMean > 0 ? noiseStd / noiseMean : 0;
+
+  // Score : forte incohérence du bruit = suspicion de manipulation
+  // Mais aussi : bruit globalement très faible = lissage IA
+  let manipScore = Math.min(100, cv * 120);
+  let aiSmoothHint = noiseMean < 1.5 ? Math.min(100, (1.5 - noiseMean) * 60) : 0;
+
+  return { manipScore, aiSmoothHint, noiseMean, cv };
+}
+
+// ============================================================
+// ANALYSE DES CONTOURS (edge consistency)
+// ============================================================
+function analyzeEdges(imageData) {
+  const { data, width, height } = imageData;
+  const blockSize = 32;
+  const cols = Math.floor(width / blockSize);
+  const rows = Math.floor(height / blockSize);
+  const blockEdges = [];
+
+  for (let by = 0; by < rows; by++) {
+    for (let bx = 0; bx < cols; bx++) {
+      let edgeSum = 0, count = 0;
+      for (let y = by * blockSize + 1; y < (by + 1) * blockSize - 1; y++) {
+        for (let x = bx * blockSize + 1; x < (bx + 1) * blockSize - 1; x++) {
+          const i = (y * width + x) * 4;
+          // Sobel simplifié horizontal+vertical
+          const gx = data[i + 4] - data[i - 4];
+          const gy = data[(y + 1) * width * 4 + x * 4] - data[(y - 1) * width * 4 + x * 4];
+          edgeSum += Math.sqrt(gx * gx + gy * gy);
+          count++;
+        }
+      }
+      blockEdges.push(edgeSum / count);
+    }
+  }
+
+  const mean = blockEdges.reduce((a, b) => a + b, 0) / blockEdges.length;
+  const variance = blockEdges.reduce((a, b) => a + (b - mean) ** 2, 0) / blockEdges.length;
+  const stddev = Math.sqrt(variance);
+  const cv = mean > 0 ? stddev / mean : 0;
+
+  // Score
+  let score = Math.min(100, cv * 80);
+  return { score, mean, cv };
+}
+
+// ============================================================
+// ANALYSE DES COULEURS (clustering)
+// ============================================================
+function analyzeColors(imageData) {
+  const { data } = imageData;
+  // Histogramme grossier 8x8x8
+  const hist = new Array(512).fill(0);
+  let total = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i] >> 5;
+    const g = data[i + 1] >> 5;
+    const b = data[i + 2] >> 5;
+    hist[r * 64 + g * 8 + b]++;
+    total++;
+  }
+  // Calculer l'entropie
+  let entropy = 0;
+  for (const c of hist) {
+    if (c > 0) {
+      const p = c / total;
+      entropy -= p * Math.log2(p);
+    }
+  }
+  // Entropie max = log2(512) ≈ 9
+  // Une faible entropie = palette concentrée (typique IA)
+  const normalizedEntropy = entropy / 9;
+
+  // Score IA : moins l'entropie est élevée, plus c'est suspect (mais attention aux images simples)
+  let aiScore = 0;
+  if (normalizedEntropy < 0.55) {
+    aiScore = (0.55 - normalizedEntropy) * 150;
+  }
+  aiScore = Math.min(100, Math.max(0, aiScore));
+
+  return { aiScore, entropy, normalizedEntropy };
+}
+
+// ============================================================
+// ANALYSE DE LA PALETTE / SATURATION
+// ============================================================
+function analyzePalette(imageData) {
+  const { data } = imageData;
+  let totalSat = 0, totalVal = 0, count = 0;
+  // Échantillonnage 1 pixel sur 4 pour rapidité
+  for (let i = 0; i < data.length; i += 16) {
+    const r = data[i] / 255, g = data[i + 1] / 255, b = data[i + 2] / 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    const v = max;
+    const s = max === 0 ? 0 : (max - min) / max;
+    totalSat += s;
+    totalVal += v;
+    count++;
+  }
+  const avgSat = totalSat / count;
+  const avgVal = totalVal / count;
+  // Saturation très élevée + valeur très élevée = palette "trop vive" typique IA
+  let aiScore = 0;
+  if (avgSat > 0.45) {
+    aiScore = (avgSat - 0.45) * 200;
+  }
+  aiScore = Math.min(100, Math.max(0, aiScore));
+  return { aiScore, avgSat, avgVal };
+}
+
+// ============================================================
+// ANALYSE DU LISSAGE (texture detection)
+// ============================================================
+function analyzeSmoothness(imageData) {
+  const { data, width, height } = imageData;
+  // Calcul du gradient local moyen — un lissage anormal donne un faible gradient
+  let totalGrad = 0;
+  let lowGradPixels = 0;
+  let count = 0;
+  for (let y = 1; y < height - 1; y += 2) {
+    for (let x = 1; x < width - 1; x += 2) {
+      const i = (y * width + x) * 4;
+      const iR = (y * width + x + 1) * 4;
+      const iD = ((y + 1) * width + x) * 4;
+      const grayCenter = (data[i] + data[i + 1] + data[i + 2]) / 3;
+      const grayR = (data[iR] + data[iR + 1] + data[iR + 2]) / 3;
+      const grayD = (data[iD] + data[iD + 1] + data[iD + 2]) / 3;
+      const grad = Math.abs(grayCenter - grayR) + Math.abs(grayCenter - grayD);
+      totalGrad += grad;
+      if (grad < 2) lowGradPixels++;
+      count++;
+    }
+  }
+  const avgGrad = totalGrad / count;
+  const lowGradRatio = lowGradPixels / count;
+
+  // Score IA : trop de zones plates = signature IA (peau plastique, ciels parfaits)
+  let aiScore = 0;
+  if (lowGradRatio > 0.40) {
+    aiScore = (lowGradRatio - 0.40) * 200;
+  }
+  if (avgGrad < 3) {
+    aiScore += (3 - avgGrad) * 15;
+  }
+  aiScore = Math.min(100, Math.max(0, aiScore));
+
+  return { aiScore, avgGrad, lowGradRatio };
+}
+
+// ============================================================
+// ANALYSE FREQUENTIELLE SIMPLIFIEE (DCT-like blocks)
+// ============================================================
+function analyzeFrequencyArtifacts(imageData) {
+  const { data, width, height } = imageData;
+  // Recherche de motifs périodiques par autocorrelation simplifiée
+  // On échantillonne des lignes horizontales et on cherche des répétitions
+  const sampleRows = Math.min(20, Math.floor(height / 10));
+  let totalPeriodicity = 0;
+  let measurements = 0;
+
+  for (let r = 0; r < sampleRows; r++) {
+    const y = Math.floor((r + 0.5) * height / sampleRows);
+    const row = [];
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      row.push((data[i] + data[i + 1] + data[i + 2]) / 3);
+    }
+    // Autocorrelation pour quelques décalages
+    const lags = [4, 8, 16, 32];
+    for (const lag of lags) {
+      if (row.length > lag * 2) {
+        let corrSum = 0, count = 0;
+        for (let x = 0; x < row.length - lag; x++) {
+          corrSum += Math.abs(row[x] - row[x + lag]);
+          count++;
+        }
+        const meanDiff = corrSum / count;
+        // Plus la différence est petite à un lag fixe, plus il y a un motif périodique
+        if (meanDiff < 6) {
+          totalPeriodicity += (6 - meanDiff);
+        }
+        measurements++;
+      }
+    }
+  }
+
+  const periodicity = measurements > 0 ? totalPeriodicity / measurements : 0;
+  // Score IA
+  let aiScore = Math.min(100, periodicity * 30);
+  return { aiScore, periodicity };
+}
+
+// ============================================================
+// PARSE EXIF (minimal, JPEG only)
+// ============================================================
+function parseEXIF(arrayBuffer, mimeType) {
+  if (!mimeType.includes("jpeg") && !mimeType.includes("jpg")) {
+    return { hasExif: false, fields: [] };
+  }
+  const view = new DataView(arrayBuffer);
+  if (view.getUint16(0) !== 0xFFD8) return { hasExif: false, fields: [] };
+  let offset = 2;
+  while (offset < view.byteLength - 4) {
+    const marker = view.getUint16(offset);
+    if (marker === 0xFFE1) {
+      const segLen = view.getUint16(offset + 2);
+      const exifHeader = String.fromCharCode(
+        view.getUint8(offset + 4),
+        view.getUint8(offset + 5),
+        view.getUint8(offset + 6),
+        view.getUint8(offset + 7)
+      );
+      if (exifHeader === "Exif") {
+        const tiffStart = offset + 10;
+        const little = view.getUint16(tiffStart) === 0x4949;
+        const ifd0Offset = view.getUint32(tiffStart + 4, little);
+        const fields = readIFD(view, tiffStart, tiffStart + ifd0Offset, little);
+        return { hasExif: fields.length > 0, fields };
+      }
+    } else if (marker === 0xFFDA) {
+      break; // Start of scan
+    }
+    if ((marker & 0xFF00) !== 0xFF00) break;
+    const segLen = view.getUint16(offset + 2);
+    offset += 2 + segLen;
+  }
+  return { hasExif: false, fields: [] };
+}
+
+function readIFD(view, tiffStart, ifdOffset, little) {
+  const tags = {
+    0x010F: "Make",
+    0x0110: "Model",
+    0x0131: "Software",
+    0x0132: "DateTime",
+    0x9003: "DateTimeOriginal",
+    0x9004: "DateTimeDigitized",
+    0x010E: "ImageDescription",
+    0x013B: "Artist",
+    0x8298: "Copyright",
+    0x829A: "ExposureTime",
+    0x829D: "FNumber",
+    0x8827: "ISO",
+    0x920A: "FocalLength",
+    0x8825: "GPSInfo"
+  };
+  const fields = [];
+  if (ifdOffset + 2 > view.byteLength) return fields;
+  const numEntries = view.getUint16(ifdOffset, little);
+  if (numEntries > 200) return fields;
+  for (let i = 0; i < numEntries; i++) {
+    const entryOffset = ifdOffset + 2 + i * 12;
+    if (entryOffset + 12 > view.byteLength) break;
+    const tag = view.getUint16(entryOffset, little);
+    if (!tags[tag]) continue;
+    const type = view.getUint16(entryOffset + 2, little);
+    const count = view.getUint32(entryOffset + 4, little);
+    const valueOffset = view.getUint32(entryOffset + 8, little);
+    let value = "";
+    try {
+      if (type === 2) { // ASCII string
+        const strOffset = count > 4 ? tiffStart + valueOffset : entryOffset + 8;
+        const len = Math.min(count, 100);
+        const bytes = [];
+        for (let j = 0; j < len - 1; j++) {
+          if (strOffset + j < view.byteLength) {
+            const c = view.getUint8(strOffset + j);
+            if (c === 0) break;
+            bytes.push(c);
+          }
+        }
+        value = String.fromCharCode(...bytes).trim();
+      } else if (type === 3) { // SHORT
+        value = String(view.getUint16(entryOffset + 8, little));
+      } else if (type === 4) { // LONG
+        value = String(view.getUint32(entryOffset + 8, little));
+      } else if (type === 5 && count === 1) { // RATIONAL
+        if (tiffStart + valueOffset + 8 <= view.byteLength) {
+          const num = view.getUint32(tiffStart + valueOffset, little);
+          const den = view.getUint32(tiffStart + valueOffset + 4, little);
+          value = den !== 0 ? (num / den).toFixed(3) : String(num);
+        }
+      }
+    } catch (e) {}
+    if (value) fields.push({ name: tags[tag], value });
+  }
+  return fields;
+}
+
+
+// ============================================================
+// AFFICHAGE DES RÉSULTATS
+// ============================================================
+function lvClass(score){ return score>=60?"lv-bad":score>=35?"lv-warn":"lv-ok"; }
+function displayResults(r){
+  var manipScore=Math.round(r.elaResult.score*0.45+r.noiseResult.manipScore*0.30+r.edgeResult.score*0.25);
+  var aiScore=Math.round(r.smoothResult.aiScore*0.35+r.freqResult.aiScore*0.20+r.colorResult.aiScore*0.20+r.paletteResult.aiScore*0.15+r.noiseResult.aiSmoothHint*0.10);
+  setScore("scoreManipValue","scoreManipBar","scoreManipVerdict",manipScore,"manip");
+  setScore("scoreAIValue","scoreAIBar","scoreAIVerdict",aiScore,"ai");
+
+  $("forensicIndicators").innerHTML=[
+    makeIndicator("indElaName",r.elaResult.score,[r.elaResult.score>35?"indElaSuspect":"indElaOk"],"σ="+r.elaResult.stddev.toFixed(2)+" · "+(r.elaResult.ratio*100).toFixed(1)+"%"),
+    makeIndicator("indNoiseName",r.noiseResult.manipScore,[r.noiseResult.manipScore>35?"indNoiseSuspect":"indNoiseOk"],"CV="+r.noiseResult.cv.toFixed(3)),
+    makeIndicator("indEdgeName",r.edgeResult.score,[r.edgeResult.score>35?"indEdgeSuspect":"indEdgeOk"],"CV="+r.edgeResult.cv.toFixed(3))
+  ].join("");
+  $("aiIndicators").innerHTML=[
+    makeIndicator("indSmoothName",r.smoothResult.aiScore,[r.smoothResult.aiScore>30?"indSmoothSuspect":"indSmoothOk"],"flat="+(r.smoothResult.lowGradRatio*100).toFixed(0)+"%"),
+    makeIndicator("indColorName",r.colorResult.aiScore,[r.colorResult.aiScore>30?"indColorSuspect":"indColorOk"],"H="+(r.colorResult.normalizedEntropy*100).toFixed(0)+"%"),
+    makeIndicator("indFreqName",r.freqResult.aiScore,[r.freqResult.aiScore>30?"indFreqSuspect":"indFreqOk"],"p="+r.freqResult.periodicity.toFixed(2)),
+    makeIndicator("indPaletteName",r.paletteResult.aiScore,[r.paletteResult.aiScore>30?"indPaletteSuspect":"indPaletteOk"],"sat="+(r.paletteResult.avgSat*100).toFixed(0)+"%")
+  ].join("");
+  renderExif(r.exif);
+}
+function setScore(valueId,barId,verdictId,score,kind){
+  var cls=lvClass(score), key;
+  if(score>=60) key=kind==="manip"?"verdictSuspect":"verdictLikelyAI";
+  else if(score>=35) key=kind==="manip"?"verdictDoubt":"verdictHumanCheck";
+  else key=kind==="manip"?"verdictAuthentic":"verdictLikelyHuman";
+  $(valueId).textContent=score+"%"; $(valueId).className="val "+cls;
+  $(barId).style.width=score+"%"; $(barId).className="fill "+cls;
+  $(verdictId).textContent=t(key); $(verdictId).className="verdict "+cls;
+}
+function makeIndicator(nameKey,score,statusKeys,detail){
+  var cls=lvClass(score);
+  var levelLabel=cls==="lv-bad"?t("levelHigh"):cls==="lv-warn"?t("levelMed"):t("levelLow");
+  return '<div class="ind '+cls+'"><div class="n">'+t(nameKey)+' · '+levelLabel+'</div>'+
+    '<div class="v">'+statusKeys.map(function(k){return t(k);}).join(" · ")+'</div>'+
+    '<div class="d">'+detail.replace(/</g,"&lt;")+'</div></div>';
+}
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function renderExif(exif){
+  var box=$("exifBox");
+  if(!exif.hasExif||exif.fields.length===0){
+    box.innerHTML='<p class="ptitle" style="font-size:13px">'+esc(t("exifNone"))+'</p><p class="pdesc">'+esc(t("exifNoneDetail"))+'</p>';
+    return;
+  }
+  var html='<dl class="kv">';
+  exif.fields.forEach(function(f){
+    var v=esc(f.value);
+    if(f.name==="Software"&&/photoshop|gimp|lightroom|paint|topaz|affinity|pixelmator/i.test(f.value)){
+      v+='<span class="flag">'+esc(t("exifSoftwareWarn"))+'</span>';
+    }
+    html+='<dt>'+esc(f.name)+'</dt><dd>'+v+'</dd>';
+  });
+  box.innerHTML=html+'</dl>';
+}
+
+bootChrome();
+</script>
+</body>
+</html>
